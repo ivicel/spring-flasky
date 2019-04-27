@@ -1,0 +1,35 @@
+server:
+    servlet:
+        context-path: /flasky
+    port: 8088
+
+spring:
+    datasource:
+        type: com.alibaba.druid.pool.DruidDataSource
+        druid:
+            url: jdbc:mysql://localhost:3306/flasky?useSSL=false&characterEncoding=UTF-8
+            username: root
+            password: 123456
+            driver-class-name: com.mysql.cj.jdbc.Driver
+
+    jpa:
+        hibernate:
+            ddl-auto: update
+#        show-sql: true
+        database: mysql
+
+        properties:
+            hibernate.dialect: org.hibernate.dialect.MySQL57Dialect
+            hibernate.dialect.storage_engine: innodb
+
+    mail:
+        host: smtp.gmail.com
+        port: 587
+        username: qinglianglove@gmail.com
+        password: qlmswwqgthxdazxl
+        properties:
+            mail.smtp.auth: true
+            mail.smtp.starttls.enable: true
+flasky:
+    securityKey: THulXdiK1U9voFcqyLEcemDYf8QcboIIfCeEbgW5dAE16kQC7hO
+

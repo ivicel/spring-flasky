@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <th:block th:fragment="scripts(scripts)">
+        <script th:src="@{/static/jquery.min.js}" type="text/javascript"></script>
+        <script th:src="@{/static/js/bootstrap.min.js}" type="text/javascript"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/pagedown/1.0/Markdown.Converter.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/pagedown/1.0/Markdown.Sanitizer.js"></script>
+        <script src="//cdnjs.cloudflare.com/ajax/libs/pagedown/1.0/Markdown.Editor.js"></script>
+        <script type="text/javascript">
+            $('.disabled a').click(function(e) {
+                e.preventDefault();
+            });
+
+            $('#submit').click(function(e) {
+                let data = {};
+                let $csrf = $('.csrf');
+                data[$csrf.attr('name')] = $csrf.attr('value');
+                data['body'] = $('.pagedown-input').val();
+                data['bodyHtml'] = $('.pagedown-preview').html();
+
+                $.post($(this).data('url'), data, function(result, textStatus, xhr) {
+                    if (xhr.status === 200) {
+                        window.location.reload();
+                        let alert = $('.alert');
+                        alert.text(result.message);
+                        alert.css('display', 'none');
+                        alert.addClass(result.class);
+                    }
+                });
+            })
+        </script>
+        <th:block th:replace="${scripts}"/>
+    </th:block>
+</body>
+</html>

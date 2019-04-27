@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{module/head :: head(~{::title}, _, _)}">
+    <title>Flasky</title>
+
+</head>
+<body>
+    <div th:replace="~{module/navbar :: navbar(_)}"></div>
+
+    <div class="container">
+        <div class="col-md-8 middle">
+        <div class="page-header">
+            <h1>500 Internal Server Error</h1>
+        </div>
+        </div>
+    </div>
+
+    <th:block th:replace="~{module/scripts :: scripts(_)}"/>
+</body>
+</html>

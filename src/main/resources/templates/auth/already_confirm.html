@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{module/head :: head(~{::title}, _, _)}">
+    <title>Flasky - Login</title>
+</head>
+<body>
+    <div th:replace="~{module/navbar :: navbar('none')}"></div>
+    <div class="container" style="position: relative;">
+        <div class="col-md-6 middle">
+            <p style="font-size: 18px;">This account is already confirmed. click <a th:href="@{/auth/login}">here</a> to login</p>
+        </div>
+    </div>
+
+    <th:block th:replace="~{module/scripts :: scripts(~{::script})}">
+        <script type="application/javascript">
+            let counter = 10;
+            $('.time-rest').text(counter);
+            setInterval(function() {
+                if (--counter === 0) {
+                    window.location.href = $('a.redirec-href').first().attr('href');
+                }
+                $('.time-rest').text(counter);
+            }, 1000);
+        </script>
+    </th:block>
+</body>
+</html>

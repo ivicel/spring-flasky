@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{module/head :: head(~{::title}, _, _)}">
+    <title>Flasky - Post View</title>
+
+</head>
+<body>
+    <div th:replace="~{module/navbar :: navbar('')}"></div>
+
+    <div class="container">
+        <div class="col-md-8 middle">
+            <div th:replace="~{module/_post :: postEntry(${posts})}"></div>
+
+            <h4 id="comments">Comments</h4>
+            <div class="comment-form"
+                 sec:authorize-expr="hasPermission(null, T(info.ivicel.springflasky.web.model.Permission).COMMENT)">
+                <div class="form-group">
+                    <input class="csrf" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                </div>
+                <div class="pagedown form-group">
+                    <textarea class="form-control pagedown-input" id="pagedown-body"
+                              placeholder="Type what you think...." required></textarea>
+                </div>
+                <div class="pagedown-preview" id="pagedown-body-preview"></div>
+                <button th:data-url="@{/comment/post-new-comment(postId=${post.id})}" class="btn btn-info" id="submit" type="button">Submit</button>
+            </div>
+
+            <div th:replace="~{module/_comment :: commentEntry(${comments.content})}"></div>
+
+            <div class="pagination" th:insert="~{module/pagination :: pagination(@{/post{id}#comments(id=${post.id})}, ${comments})}"></div>
+        </div>
+    </div>
+
+    <th:block th:replace="~{module/scripts :: scripts(~{::script})}">
+        <script type="text/javascript">
+            $('.moderate-status').click(function (e) {
+                e.preventDefault();
+                let data = {};
+                let csrf = $('input[type=hidden]');
+                data[csrf.attr('name')] = csrf.attr('value');
+                $.post($(this).attr('href'), data, function (result, statusText, xhr) {
+                    window.location.reload();
+                });
+            });
+            let f = () => {
+                let pageDownConvert = Markdown.getSanitizingConverter().makeHtml;
+                let textarea = document.getElementById("pagedown-body");
+                let preview = document.getElementById("pagedown-body-preview");
+
+                textarea.onkeyup = () => {
+                    preview.innerHTML = pageDownConvert(textarea.value);
+                };
+                textarea.onkeyup.call(textarea);
+            };
+
+            if (document.readyState === 'complete') {
+                f();
+            } else if (window.addEventListener) {
+                window.addEventListener("load", f, false);
+            } else if (window.attachEvent) {
+                window.attachEvent("onload", f);
+            } else {
+                f();
+            }
+        </script>
+    </th:block>
+</body>
+</html>

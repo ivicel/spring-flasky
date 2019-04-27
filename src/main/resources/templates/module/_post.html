@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <ul class="posts" th:fragment="postEntry(posts)">
+        <li class="post" th:each="post : ${posts}">
+            <div class="profile-thumbnail">
+                <a th:href="@{/user/{username}(username=${post.author.username})}">
+                    <img th:src="@{https://secure.gravatar.com/avatar/{hash}(hash=${post.author.avatarHash}, s=40, d='identicon', r=8)}" alt="gravatar" class="img-rounded profile-thumbnail">
+                </a>
+            </div>
+            <div class="post-content">
+                <div class="post-date" th:text="${#dates.format(post.createdDate, 'yyyy-MM-dd HH:mm')}">{{ moment(post.createdDate).fromNow() }}</div>
+                <div class="post-author">
+                    <a th:href="@{/user/{username}(username=${post.author.username})}"
+                        th:text="${post.author.username}">
+                        {{ post.author.username }}
+                    </a>
+                </div>
+                <div class="post-body" th:utext="${#strings.isEmpty(post.bodyHtml)} ? ${post.body} :
+                    ${post.bodyHtml}">
+                </div>
+                <div class="post-footer">
+                    <a th:href="@{/post/{id}(id=${post.id})}">
+                        <span class="label label-default">Permalink</span>
+                    </a>
+                    <a th:if="${not #authorization.expr('isAnonymous()') and
+                        #authentication.name eq post.author.username}"
+                       th:href="@{/post/edit/{id}(id=${post.id})}">
+                        <span class="label label-primary">Edit</span>
+                    </a>
+                    <a sec:authorize="hasRole('ADMIN')" th:href="@{/post/admin/edit/{id}(id=${post.id})}">
+                        <span class="label label-danger">Edit [Admin]</span>
+                    </a>
+                </div>
+            </div>
+        </li>
+    </ul>
+</body>
+</html>

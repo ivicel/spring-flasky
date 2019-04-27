@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <ul class="comments" th:fragment="commentEntry(comments)">
+        <li th:each="comment : ${comments}" class="comment">
+            <div class="comment-thumbnail">
+                <a th:href="@{/user/{username}(username=${comment.author.username})}">
+                    <img class="img-rounded profile-thumbnail" th:src="@{https://secure.gravatar.com/avatar/{hash}(hash=${comment.author.avatarHash}, s=40, d='identicon', r=8)}">
+                </a>
+            </div>
+            <div class="comment-content">
+                <div class="comment-date" th:data-timestamp="${comment.createdDate}">[[${comment.createdDate}]]</div>
+                <div class="comment-author">
+                    <a th:href="@{/user/{username}(username=${comment.author.username})}">
+                        [[${comment.author.username}]]
+                    </a>
+                </div>
+                <div class="comment-body">
+                    <p th:if="${comment.disabled}"><i>This comment has been disabled by a moderator.</i></p>
+                    <p th:unless="${comment.disabled}" th:utext="${comment.bodyHtml?: comment.body}"></p>
+                </div>
+                <th:block sec:authorize-expr="hasPermission(null, T(info.ivicel.springflasky.web.model.Permission).MODERATE)">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <br>
+                <a th:if="${comment.disabled}" class="btn btn-default btn-xs moderate-status"
+                   th:href="@{/comment/moderate(disable=false, commentId=${comment.id})}">Enable</a>
+                <a th:unless="${comment.disabled}" class="btn btn-danger btn-xs moderate-status"
+                   th:href="@{/comment/moderate(disable=true, commentId=${comment.id})}">Disable</a>
+                </th:block>
+            </div>
+        </li>
+    </ul>
+</body>
+</html>

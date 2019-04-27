@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <div class="navbar navbar-inverse" role="navigation" th:fragment="navbar(active)">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse"
+                        data-target=".navbar-collapse" aria-expanded="false">
+                    <span class="sr-only">Toogle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a th:href="@{/}" class="navbar-brand">Flasky</a>
+            </div>
+            <div class="navbar-collapse collapse">
+                <ul class="nav navbar-nav">
+                    <li th:classappend="${active eq 'home'}? active"><a th:href="@{/}">Home</a></li>
+                    <li th:classappend="${active eq 'profile'}? active" sec:authorize="not isAnonymous()">
+                        <a th:href="@{/user/{username}(username=${#authentication.name})}">
+                            Profile
+                        </a>
+                    </li>
+                </ul>
+                <ul class="nav navbar-nav navbar-right">
+                    <li sec:authorize="not isAnonymous()">
+                        <form method="post" th:action="@{/auth/logout}" class="navbar-form">
+                            <div class="form-group">
+                                <input type="submit" class="form-control" value="Sign Out"
+                                       style="background: transparent; border: 0; color: #9d9d9d;">
+                            </div>
+                        </form>
+                    </li>
+                    <th:block sec:authorize="isAnonymous()">
+                        <li><a th:href="@{/auth/register}">Register</a></li>
+                        <li sec:authorize="isAnonymous()">
+                            <a th:href="@{/auth/login}">Sign In</a>
+                        </li>
+                    </th:block>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

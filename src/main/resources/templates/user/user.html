@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{module/head :: head(~{::title}, _, _)}">
+    <title>Flasky - [[${user.username}]]</title>
+</head>
+<body>
+    <div th:replace="~{module/navbar :: navbar('profile')}"></div>
+
+    <div class="container">
+        <div class="col-md-8 middle">
+            <div class="page-header">
+                <img
+                    th:src="@{https://secure.gravatar.com/avatar/{hash}(hash=${user.avatarHash}, s=256, d='identicon', r=8)}"
+                    alt="gravatar" class="img-rounded profile-thumbnail">
+                <div class="profile-header">
+                    <h1 th:text="${user.username}"></h1>
+                    <p th:if="${user.name eq null || user.location eq null}">
+                        [[${user.name}?: '']]
+                        <th:block th:if="${user.location eq null}">
+                            From <a th:href="@{http://maps.google.com/(q=${user.location})}">
+                            [[${user.location}]]
+                        </a>
+                        </th:block>
+                    </p>
+                    <p><a th:href="'mailto:'  + ${user.email}">[[${user.email}]]</a></p>
+                    <p>[[${user.aboutMe}]]</p>
+                    <p>
+                        Member since <span th:data-timestamp="${user.createdDate}" data-format="format('L')"
+                                           data-refresh="0">[[${user.createdDate}]]</span>
+                        Last seen <span class="" th:data-timestamp="${user.lastSeen}" data-format="fromNow(0)"
+                                        data-refresh="0" style="">[[${user.lastSeen}]]</span>
+                    </p>
+                    <p>[[${user.postCount}]] blog posts. [[${user.commentCount}]] comments.</p>
+                    <p>
+                        <!--/* 登录用户只能编辑自己的 profile */-->
+                        <a th:if="${#authorization.expr('not isAnonymous()')} and ${#authentication.name eq user.username}"
+                           th:href="@{/user/{username}/edit-profile/(username=${user.username})}"
+                           class="btn btn-default">Edit Profile</a>
+
+                        <a sec:authorize="hasRole('ADMIN')"
+                            th:href="@{/user/admin/{username}/edit-profile(username=${user.username})}"
+                            class="btn btn-danger">Edit Profile [Admin]</a>
+                            <a th:if="${showFollow}" th:href="@{/user/follow/{username}(username=${user.username})}"
+                               class="btn btn-primary">Follow</a>
+                            <a th:if="${showUnfollow}" th:href="@{/user/unfollow/{username}(username=${user.username})}"
+                               class="btn btn-default">Unfollow</a>
+
+                        <a th:href="@{/user/{username}/followers(username=${user.username})}">
+                            Followers: <span class="badge">[[${user.followerCount}]]</span>
+                        </a>
+                        <a th:href="@{/user/{username}/following(username=${user.username})}">
+                            Following: <span class="badge">[[${user.followingCount}]]</span>
+                        </a>
+
+                        <th:block th:if="${followedBy}">
+                            | <span class="label label-default">Follows you</span>
+                        </th:block>
+                    </p>
+                </div>
+            </div>
+            <h3>Post by [[${user.username}]]</h3>
+            <!--{% include '_posts.html' %}-->
+            <th:block th:replace="~{module/_post :: postEntry(${posts.content})}"/>
+
+            <th:block th:replace="~{module/pagination :: pagination(@{/user/{username}(username=${user.username})},
+            ${posts})}"/>
+        </div>
+    </div>
+
+    <th:block th:replace="~{module/scripts :: scripts(_)}"/>
+</body>
+</html>

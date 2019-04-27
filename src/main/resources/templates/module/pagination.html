@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <ul class="pagination" th:fragment="pagination(endpoint, page)" th:if="${page.totalPages} > 1">
+        <li th:classappend="${not page.hasPrevious()}? 'disabled'">
+            <a th:href="${page.hasPrevious()} ? @{{endpoint}(endpoint=${endpoint}, page=${page.number})} : '#'" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+            </a>
+        </li>
+
+        <th:block th:each="p : ${T(info.ivicel.springflasky.util.PageUtil).pagination(page.number + 1, page.totalPages)}">
+                <li th:if="${p ne null}" th:classappend="${page.number + 1 eq p}? 'active'">
+                    <a th:href="@{{endpoint}(endpoint=${endpoint}, page=${p})}">
+                    [[${p}]]
+                    </a>
+                </li>
+                <li th:if="${p eq null}" th:classappend="disabled">
+                    <a href="#">
+                    &hellip;
+                    </a>
+                </li>
+        </th:block>
+        <li th:classappend="${not page.hasNext()}? 'disabled'">
+            <a aria-label="Next"
+               th:href="${page.hasNext()} ? @{{endpoint}(endpoint=${endpoint}, page=${page.number} + 2)} : '#'"><span aria-hidden="true">&raquo;</span></a>
+        </li>
+    </ul>
+</body>
+</html>

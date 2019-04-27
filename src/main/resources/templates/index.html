@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:replace="~{module/head :: head(~{::title}, _, _)}">
+    <title>Flasky</title>
+
+</head>
+<body>
+    <div th:replace="~{module/navbar :: navbar('home')}"></div>
+
+    <div class="container">
+        <div class="col-md-8 middle">
+            <div class="alert alert-dismissible" role="alert" style="display: none;">
+                <button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="page-header">
+                <h1>Hello, [[${#authorization.expr('isAnonymous()')} ? 'Stranger' : ${#authentication.name}]]!</h1>
+            </div>
+            <div sec:authorize-expr="hasPermission(null, T(info.ivicel.springflasky.web.model.Permission).WRITE)">
+                <div class="form-group">
+                    <input class="csrf" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}">
+                </div>
+                <div class="pagedown form-group">
+                    <textarea class="form-control pagedown-input" id="pagedown-body"
+                        placeholder="Type what you think...." required></textarea>
+                </div>
+                <div class="pagedown-preview" id="pagedown-body-preview"></div>
+                <button th:data-url="@{/post}" class="btn btn-info" id="submit" type="button">Submit</button>
+            </div>
+            <div class="post-tabs">
+                <ul class="nav nav-tabs"></ul>
+                <div th:replace="~{module/_post :: postEntry(${posts.content})}"></div>
+            </div>
+
+            <div class="pagination" th:insert="~{module/pagination :: pagination(@{/}, ${posts})}"></div>
+        </div>
+    </div>
+
+    <th:block th:replace="~{module/scripts :: scripts(~{::script})}">
+        <script type="text/javascript">
+            let f = () => {
+                let pageDownConvert = Markdown.getSanitizingConverter().makeHtml;
+                let textarea = document.getElementById("pagedown-body");
+                let preview = document.getElementById("pagedown-body-preview");
+
+                textarea.onkeyup = () => {
+                    preview.innerHTML = pageDownConvert(textarea.value);
+                };
+                textarea.onkeyup.call(textarea);
+            };
+
+            if (document.readyState === 'complete') {
+                f();
+            } else if (window.addEventListener) {
+                window.addEventListener("load", f, false);
+            } else if (window.attachEvent) {
+                window.attachEvent("onload", f);
+            } else {
+                f();
+            }
+        </script>
+    </th:block>
+</body>
+</html>
