@@ -8,7 +8,6 @@ import info.ivicel.springflasky.web.repository.PostRepository;
 import info.ivicel.springflasky.web.repository.RoleRepository;
 import info.ivicel.springflasky.web.repository.UserRepository;
 import info.ivicel.springflasky.web.service.UserService;
-import java.util.Collections;
 import java.util.Date;
 import java.util.Optional;
 import java.util.regex.Pattern;
@@ -91,19 +90,33 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     @Override
-    public int follow(User u1, User u2) {
-        if (!u1.isFollowing(this, u2)) {
-            u1.setFollowingCount(u1.getFollowingCount() + 1);
-            u1.setFollowings(Collections.singletonList(u2));
+    @Transactional
+    public void follow(User user, User other) {
+        // don't use the following counts in current authentication object, because
+        // we don't promise it sync to database in time
+        if (!user.isFollowing(this, other)) {
+            userRepository.increaseFollowingCount(user.getId());
+            userRepository.increaseFollowerCount(other.getId());
+            userRepository.insertFollowRelation(user.getId(), other.getId());
         }
-
-        return 0;
     }
 
     @Override
     public void updateLastSeen(User user) {
         user.setLastSeen(new Date());
         userRepository.save(user);
+    }
+
+    @Override
+    @Transactional
+    public void unfollow(User user, User other) {
+        if (user.isFollowing(this, other)) {
+            // don't use the follower counts in current authentication object, because
+            // we don't promise it sync to database in time
+            userRepository.decreaseFollowingCount(user.getId());
+            userRepository.decreaseFollowerCount(other.getId());
+            userRepository.removeFollowRelation(user.getId(), other.getId());
+        }
     }
 
     @Override

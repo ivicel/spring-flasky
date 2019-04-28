@@ -49,4 +49,28 @@ public interface UserRepository extends BaseRepository<User, Long> {
     @Modifying
     @Query("update User u set u.postCount = u.postCount + 1 where u.username = :username")
     int updatePostCount(@Param("username") String username);
+
+    @Modifying
+    @Query("update User u set u.followingCount = u.followingCount + 1 where u.id = ?1")
+    void increaseFollowingCount(Long id);
+
+    @Modifying
+    @Query("update User u set u.followerCount = u.followerCount + 1 where u.id = ?1")
+    void increaseFollowerCount(Long id);
+
+    @Modifying
+    @Query(value = "insert into follows (follower_id, followed_id) values (:id, :other)", nativeQuery = true)
+    void insertFollowRelation(@Param("id") Long id, @Param("other") Long other);
+
+    @Modifying
+    @Query("update User u set u.followingCount = u.followingCount - 1 where u.id = ?1")
+    void decreaseFollowingCount(Long id);
+
+    @Modifying
+    @Query("update User u set u.followerCount = u.followerCount - 1 where u.id = ?1")
+    void decreaseFollowerCount(Long id);
+
+    @Modifying
+    @Query(value = "delete from follows where follower_id = :id and followed_id = :other", nativeQuery = true)
+    void removeFollowRelation(@Param("id") Long id, @Param("other") Long other);
 }

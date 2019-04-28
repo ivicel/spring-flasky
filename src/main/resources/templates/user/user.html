@@ -37,13 +37,14 @@
                            th:href="@{/user/{username}/edit-profile/(username=${user.username})}"
                            class="btn btn-default">Edit Profile</a>
 
+                        <input class="csrf" type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
                         <a sec:authorize="hasRole('ADMIN')"
                             th:href="@{/user/admin/{username}/edit-profile(username=${user.username})}"
                             class="btn btn-danger">Edit Profile [Admin]</a>
-                            <a th:if="${showFollow}" th:href="@{/user/follow/{username}(username=${user.username})}"
-                               class="btn btn-primary">Follow</a>
-                            <a th:if="${showUnfollow}" th:href="@{/user/unfollow/{username}(username=${user.username})}"
-                               class="btn btn-default">Unfollow</a>
+                        <a th:if="${showFollow}" th:href="@{/user/follow/{username}(username=${user.username})}"
+                           class="btn btn-primary follow">Follow</a>
+                        <a th:if="${showUnfollow}" th:href="@{/user/unfollow/{username}(username=${user.username})}"
+                           class="btn btn-default follow">Unfollow</a>
 
                         <a th:href="@{/user/{username}/followers(username=${user.username})}">
                             Followers: <span class="badge">[[${user.followerCount}]]</span>
@@ -59,7 +60,7 @@
                 </div>
             </div>
             <h3>Post by [[${user.username}]]</h3>
-            <!--{% include '_posts.html' %}-->
+
             <th:block th:replace="~{module/_post :: postEntry(${posts.content})}"/>
 
             <th:block th:replace="~{module/pagination :: pagination(@{/user/{username}(username=${user.username})},
@@ -67,6 +68,18 @@
         </div>
     </div>
 
-    <th:block th:replace="~{module/scripts :: scripts(_)}"/>
+    <th:block th:replace="~{module/scripts :: scripts(~{::script})}">
+        <script>
+            $('.follow').click(function (e) {
+                e.preventDefault();
+                let csrf = $('.csrf');
+                let data = {};
+                data[csrf.attr('name')] = csrf.attr('value');
+                $.post($(this).attr('href'), data, function(data) {
+                    window.location.reload();
+                })
+            });
+        </script>
+    </th:block>
 </body>
 </html>

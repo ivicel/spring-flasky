@@ -63,7 +63,7 @@ public class User extends BaseDomain implements UserDetails, Serializable {
 
     @JsonIgnore
     @ManyToMany(mappedBy = "followings")
-    private List<User> followers;
+    private List<User> followers = new ArrayList<>();
 
     @JsonIgnore
     @ManyToMany

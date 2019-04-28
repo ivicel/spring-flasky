@@ -22,14 +22,16 @@ spring:
             hibernate.dialect: org.hibernate.dialect.MySQL57Dialect
             hibernate.dialect.storage_engine: innodb
 
+# email sender service
     mail:
         host: smtp.gmail.com
         port: 587
-        username: qinglianglove@gmail.com
+        username: example@gmail.com
         password: qlmswwqgthxdazxl
         properties:
             mail.smtp.auth: true
             mail.smtp.starttls.enable: true
 flasky:
+    # add your security key
     securityKey: THulXdiK1U9voFcqyLEcemDYf8QcboIIfCeEbgW5dAE16kQC7hO
 

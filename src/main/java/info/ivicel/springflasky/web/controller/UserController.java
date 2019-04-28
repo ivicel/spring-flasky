@@ -64,8 +64,8 @@ public class UserController {
             try {
                 User currentUser = (User) auth.getPrincipal();
                 if (!currentUser.equals(user)) {
-                    showFollow = currentUser.isFollowing(userService, user);
-                    showUnfollow = !showFollow;
+                    showUnfollow = currentUser.isFollowing(userService, user);
+                    showFollow = !showUnfollow;
                     followedBy = currentUser.isFollowedBy(userService, user);
                 }
             } catch (ClassCastException e) {
@@ -121,10 +121,9 @@ public class UserController {
         return "redirect:/user";
     }
 
-    // todo: follow
     @PostMapping("/follow/{username}")
     @ResponseBody
-    @PreAuthorize("@webAuth.loginRequired(authentication)")
+    @PreAuthorize("hasPermission(null, T(info.ivicel.springflasky.web.model.Permission).FOLLOW)")
     public ResponseEntity follow(Authentication auth, @PathVariable("username") String username) {
         User currentUser = (User) auth.getPrincipal();
         if (currentUser.getUsername().equals(username)) {
@@ -137,17 +136,29 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(String.format("%s not found", username));
         }
 
-        int count = userService.follow(currentUser, other.get());
+        userService.follow(currentUser, other.get());
 
-        return count > 0 ? ResponseEntity.status(HttpStatus.OK).body("ok") :
-                ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("internal server error");
+        return ResponseEntity.status(HttpStatus.OK).body("ok");
     }
 
     // todo: unfollow
     @PostMapping("/unfollow/{username}")
     @ResponseBody
-    @PreAuthorize("@webAuth.loginRequired(authentication)")
-    public ResponseEntity unfollow(@PathVariable("username") String username) {
+    @PreAuthorize("hasPermission(null, T(info.ivicel.springflasky.web.model.Permission).FOLLOW)")
+    public ResponseEntity unfollow(Authentication auth, @PathVariable("username") String username) {
+        User currentUser = (User) auth.getPrincipal();
+        if (currentUser.getUsername().equals(username)) {
+            log.info("user cannot follow itself.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("can't unfollow myself");
+        }
+
+        Optional<User> other = userService.findByUsername(username);
+        if (!other.isPresent()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(String.format("%s not found", username));
+        }
+
+        userService.unfollow(currentUser, other.get());
+
         return ResponseEntity.ok("ok");
     }
 

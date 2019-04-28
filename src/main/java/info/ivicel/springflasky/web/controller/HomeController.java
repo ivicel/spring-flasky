@@ -39,10 +39,4 @@ public class HomeController {
 
         return "index";
     }
-
-    @GetMapping("/index")
-    @ResponseBody
-    public ResponseEntity auth(Authentication authentication) {
-        return ResponseEntity.ok(authentication);
-    }
 }

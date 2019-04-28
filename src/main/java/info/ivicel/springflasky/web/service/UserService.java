@@ -29,7 +29,9 @@ public interface UserService {
 
     int updatePostCount(User author);
 
-    int follow(User u1, User u2);
+    void follow(User user, User other);
 
     void updateLastSeen(User user);
+
+    void unfollow(User user, User other);
 }
