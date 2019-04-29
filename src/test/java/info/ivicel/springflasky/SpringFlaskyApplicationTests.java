@@ -14,7 +14,7 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(properties = "application.yml", webEnvironment = WebEnvironment.RANDOM_PORT,
+@SpringBootTest(properties = "application-dev.yml", webEnvironment = WebEnvironment.RANDOM_PORT,
         classes = SpringFlaskyApplication.class)
 public class SpringFlaskyApplicationTests {
 
