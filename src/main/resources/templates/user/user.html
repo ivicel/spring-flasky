@@ -14,9 +14,9 @@
                     alt="gravatar" class="img-rounded profile-thumbnail">
                 <div class="profile-header">
                     <h1 th:text="${user.username}"></h1>
-                    <p th:if="${user.name eq null || user.location eq null}">
+                    <p th:if="${user.name ne null || user.location ne null}">
                         [[${user.name}?: '']]
-                        <th:block th:if="${user.location eq null}">
+                        <th:block th:if="${user.location ne null}">
                             From <a th:href="@{http://maps.google.com/(q=${user.location})}">
                             [[${user.location}]]
                         </a>
@@ -47,10 +47,10 @@
                            class="btn btn-default follow">Unfollow</a>
 
                         <a th:href="@{/user/{username}/followers(username=${user.username})}">
-                            Followers: <span class="badge">[[${user.followerCount}]]</span>
+                            Followers: <span class="badge">[[${user.followerCount}?: 0]]</span>
                         </a>
-                        <a th:href="@{/user/{username}/following(username=${user.username})}">
-                            Following: <span class="badge">[[${user.followingCount}]]</span>
+                        <a th:href="@{/user/{username}/followed-by(username=${user.username})}">
+                            Following: <span class="badge">[[${user.followingCount}?: 0]]</span>
                         </a>
 
                         <th:block th:if="${followedBy}">

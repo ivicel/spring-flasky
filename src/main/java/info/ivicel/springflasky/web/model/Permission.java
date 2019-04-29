@@ -24,7 +24,7 @@ public enum Permission {
     /**
      * 管理员权限
      */
-    ADMIN(0xf0, "ADMIN");
+    ADMIN(0xff, "ADMIN");
 
     private int value;
     private String desc;

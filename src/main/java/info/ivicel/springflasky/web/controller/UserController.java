@@ -3,12 +3,15 @@ package info.ivicel.springflasky.web.controller;
 import static org.springframework.data.domain.Sort.Direction.DESC;
 
 import info.ivicel.springflasky.exception.PageNotFoundException;
+import info.ivicel.springflasky.util.PageUtil;
 import info.ivicel.springflasky.web.model.domain.Post;
 import info.ivicel.springflasky.web.model.domain.User;
+import info.ivicel.springflasky.web.model.dto.FollowedView;
+import info.ivicel.springflasky.web.model.dto.FollowerView;
 import info.ivicel.springflasky.web.model.dto.UserProfileDto;
+import info.ivicel.springflasky.web.service.FollowService;
 import info.ivicel.springflasky.web.service.PostService;
 import info.ivicel.springflasky.web.service.UserService;
-import info.ivicel.springflasky.util.PageUtil;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,11 +38,13 @@ public class UserController {
 
     private UserService userService;
     private PostService postService;
+    private FollowService followService;
 
     @Autowired
-    public UserController(UserService userService, PostService postService) {
+    public UserController(UserService userService, PostService postService, FollowService followService) {
         this.userService = userService;
         this.postService = postService;
+        this.followService = followService;
     }
 
     /**
@@ -141,7 +146,6 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.OK).body("ok");
     }
 
-    // todo: unfollow
     @PostMapping("/unfollow/{username}")
     @ResponseBody
     @PreAuthorize("hasPermission(null, T(info.ivicel.springflasky.web.model.Permission).FOLLOW)")
@@ -160,6 +164,28 @@ public class UserController {
         userService.unfollow(currentUser, other.get());
 
         return ResponseEntity.ok("ok");
+    }
+
+    @GetMapping("/{username}/followers")
+    public String followers(@PathVariable("username") String username, Model model,
+            @PageableDefault(page = 1, size = 20, sort = "createdDate", direction = DESC) Pageable pageable) {
+        pageable = PageUtil.parsePage(pageable);
+        User user = getOrThrowException(username, model);
+        Page<FollowerView> followers = followService.findAllByFollowed(user, FollowerView.class, pageable);
+        model.addAttribute("followers", followers);
+
+        return "followers";
+    }
+
+    @GetMapping("/{username}/followed-by")
+    public String followedBy(@PathVariable("username") String username, Model model,
+            @PageableDefault(page = 1, size = 20, sort = "createdDate", direction = DESC) Pageable pageable) {
+        pageable = PageUtil.parsePage(pageable);
+        User user = getOrThrowException(username, model);
+        Page<FollowedView> followeds = followService.findAllByFollower(user, FollowedView.class, pageable);
+        model.addAttribute("followeds", followeds);
+
+        return "followed_by";
     }
 
     // todo: admin edit profile

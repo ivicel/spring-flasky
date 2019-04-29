@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{module/head :: head(~{::title}, _, _)}">
+    <meta charset="UTF-8">
+    <title>Flasky - Followed by [[${user.username}]]</title>
+</head>
+<body>
+    <div th:replace="~{module/navbar :: navbar('home')}"></div>
+
+    <div class="container">
+        <div class="col-md-8 middle">
+            <div class="page-header">
+                <h1>Followed by [[${user.username}]]</h1>
+            </div>
+            <table class="table table-hover followers">
+                <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Since</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="fo : ${followeds}">
+                    <td>
+                        <a th:href="@{/user/{username}(username=${fo.followed.username})}">
+                            <img class="img-rounded"
+                                 th:src="@{https://secure.gravatar.com/avatar/{hash}(hash=${fo.followed.avatarHash}, s=32, d='identicon', r=8)}">
+                            [[${fo.followed.username}]]
+                        </a>
+                    </td>
+                    <td th:data-timestamp="${fo.createdDate}">[[${fo.createdDate}]]</td>
+                </tr>
+                </tbody>
+            </table>
+            <th:block th:replace="~{module/pagination :: pagination(@{/user/{username}/followed-by(username=${user.username})},
+            ${followeds})}"/>
+
+            <th:block th:replace="~{module/scripts :: scripts(_)}">
+            </th:block>
+        </div>
+    </div>
+</body>
+</html>

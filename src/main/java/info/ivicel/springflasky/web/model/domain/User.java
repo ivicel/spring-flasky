@@ -8,20 +8,16 @@ import info.ivicel.springflasky.core.listener.LastSeenListener;
 import info.ivicel.springflasky.web.model.Permission;
 import info.ivicel.springflasky.web.service.UserService;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.List;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EntityListeners;
 import javax.persistence.ForeignKey;
 import javax.persistence.Index;
 import javax.persistence.JoinColumn;
-import javax.persistence.JoinTable;
 import javax.persistence.Lob;
-import javax.persistence.ManyToMany;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import lombok.Getter;
@@ -61,17 +57,17 @@ public class User extends BaseDomain implements UserDetails, Serializable {
 
     private String location;
 
-    @JsonIgnore
-    @ManyToMany(mappedBy = "followings")
-    private List<User> followers = new ArrayList<>();
-
-    @JsonIgnore
-    @ManyToMany
-    @JoinTable(name = "follows", joinColumns = {@JoinColumn(name = "follower_id", nullable = false)},
-        inverseJoinColumns = {@JoinColumn(name = "followed_id", nullable = false)},
-        indexes = {@Index(columnList = "follower_id"), @Index(columnList = "followed_id")},
-        foreignKey = @ForeignKey(NO_CONSTRAINT), inverseForeignKey = @ForeignKey(NO_CONSTRAINT))
-    private List<User> followings = new ArrayList<>();
+    // @JsonIgnore
+    // @ManyToMany(mappedBy = "followings")
+    // private List<User> followers = new ArrayList<>();
+    //
+    // @JsonIgnore
+    // @ManyToMany
+    // @JoinTable(name = "follows", joinColumns = {@JoinColumn(name = "follower_id", nullable = false)},
+    //     inverseJoinColumns = {@JoinColumn(name = "followed_id", nullable = false)},
+    //     indexes = {@Index(columnList = "follower_id"), @Index(columnList = "followed_id")},
+    //     foreignKey = @ForeignKey(NO_CONSTRAINT), inverseForeignKey = @ForeignKey(NO_CONSTRAINT))
+    // private List<User> followings = new ArrayList<>();
 
     @Lob
     @Column(name = "about_me")

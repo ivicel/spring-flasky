@@ -10,7 +10,7 @@ public interface PostView extends BaseView {
 
     User getAuthor();
 
-    interface User {
+    interface User extends BaseView {
 
         String getUsername();
 
@@ -21,8 +21,6 @@ public interface PostView extends BaseView {
         String getAboutMe();
 
         Role getRole();
-
-        Date getCreatedDate();
 
         Date getLastSeen();
 
@@ -37,7 +35,7 @@ public interface PostView extends BaseView {
         Long getCommentCount();
     }
 
-    interface Role {
+    interface Role extends BaseView {
 
         String getName();
 
