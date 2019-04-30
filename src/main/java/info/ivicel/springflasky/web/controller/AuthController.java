@@ -7,8 +7,8 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import info.ivicel.springflasky.exception.AccountExistsException;
 import info.ivicel.springflasky.web.model.domain.User;
-import info.ivicel.springflasky.web.model.dto.LoginDto;
-import info.ivicel.springflasky.web.model.dto.RegisterDto;
+import info.ivicel.springflasky.web.model.dto.LoginDTO;
+import info.ivicel.springflasky.web.model.dto.RegisterDTO;
 import info.ivicel.springflasky.web.service.UserService;
 import io.github.biezhi.ome.OhMyEmail;
 import io.github.biezhi.ome.SendMailException;
@@ -31,6 +31,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -66,7 +67,7 @@ public class AuthController {
     @GetMapping("/login")
     public String login(Model model) {
         if (!model.containsAttribute("user")) {
-            model.addAttribute("user", new LoginDto());
+            model.addAttribute("user", new LoginDTO());
         }
         return "auth/login";
     }
@@ -79,14 +80,14 @@ public class AuthController {
     @GetMapping("/register")
     public String register(Model model) {
         if (!model.containsAttribute("registerDto")) {
-            model.addAttribute("registerDto", new RegisterDto());
+            model.addAttribute("registerDto", new RegisterDTO());
         }
 
         return "auth/register";
     }
 
     @PostMapping("/register")
-    public String register(RegisterDto dto, BindingResult result, RedirectAttributes ra,
+    public String register(@Validated RegisterDTO dto, BindingResult result, RedirectAttributes ra,
             HttpServletRequest request) {
         if (result.hasErrors()) {
             ra.addFlashAttribute("registerDto", dto);

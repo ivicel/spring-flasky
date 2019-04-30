@@ -1,9 +1,12 @@
 package info.ivicel.springflasky.web.service.impl;
 
 import info.ivicel.springflasky.exception.AccountExistsException;
+import info.ivicel.springflasky.exception.DuplicateEmailException;
+import info.ivicel.springflasky.exception.DuplicateUsernameException;
 import info.ivicel.springflasky.web.model.domain.Role;
 import info.ivicel.springflasky.web.model.domain.User;
-import info.ivicel.springflasky.web.model.dto.RegisterDto;
+import info.ivicel.springflasky.web.model.dto.AdminEditProfileDTO;
+import info.ivicel.springflasky.web.model.dto.RegisterDTO;
 import info.ivicel.springflasky.web.repository.PostRepository;
 import info.ivicel.springflasky.web.repository.RoleRepository;
 import info.ivicel.springflasky.web.repository.UserRepository;
@@ -61,7 +64,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
     @Override
     @Transactional
-    public User register(RegisterDto dto) throws AccountExistsException {
+    public User register(RegisterDTO dto) throws AccountExistsException {
         int count = userRepository.countByEmailOrUsername(dto.getEmail(), dto.getUsername());
         if (count > 0) {
             throw new AccountExistsException("account already exists with [" + dto.getEmail() +
@@ -134,7 +137,51 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         return user.get();
     }
 
+    @Override
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmail(email);
+    }
+
+    @Override
+    public boolean checkEmailExists(String email) {
+        return userRepository.existsByEmail(email);
+    }
+
+    @Override
+    public boolean checkUsernameExists(String username) {
+        return userRepository.existsByUsername(username);
+    }
+
+    @Override
+    public void updateProfileByAdmin(User user, AdminEditProfileDTO profile)
+            throws DuplicateEmailException, DuplicateUsernameException {
+        // todo: validation on databinder
+        Optional<Role> role = Optional.empty();
+        if (!user.getRole().getId().equals(profile.getRole())) {
+            role = roleRepository.findById(profile.getRole());
+            if (!role.isPresent()) {
+                throw new IllegalArgumentException("role error.");
+            }
+        }
+
+        if (!user.getUsername().equals(profile.getUsername()) &&
+                checkUsernameExists(profile.getUsername())) {
+            throw new DuplicateUsernameException("username already exists.");
+        }
+
+        if (!user.getEmail().equals(profile.getEmail()) &&
+                checkEmailExists(profile.getEmail())) {
+            throw new DuplicateEmailException("email already exists.");
+        }
+
+        user.setUsername(profile.getUsername());
+        user.setEmail(profile.getEmail());
+        user.setConfirmed(profile.isConfirmed());
+        user.setAboutMe(profile.getAboutMe());
+        user.setLocation(profile.getLocation());
+        user.setName(profile.getName());
+        role.ifPresent(user::setRole);
+
+        userRepository.save(user);
     }
 }

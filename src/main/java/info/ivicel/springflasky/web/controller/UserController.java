@@ -2,16 +2,22 @@ package info.ivicel.springflasky.web.controller;
 
 import static org.springframework.data.domain.Sort.Direction.DESC;
 
+import info.ivicel.springflasky.exception.DuplicateEmailException;
+import info.ivicel.springflasky.exception.DuplicateUsernameException;
 import info.ivicel.springflasky.exception.PageNotFoundException;
 import info.ivicel.springflasky.util.PageUtil;
 import info.ivicel.springflasky.web.model.domain.Post;
+import info.ivicel.springflasky.web.model.domain.Role;
 import info.ivicel.springflasky.web.model.domain.User;
+import info.ivicel.springflasky.web.model.dto.AdminEditProfileDTO;
 import info.ivicel.springflasky.web.model.dto.FollowedView;
 import info.ivicel.springflasky.web.model.dto.FollowerView;
-import info.ivicel.springflasky.web.model.dto.UserProfileDto;
+import info.ivicel.springflasky.web.model.dto.UserProfileDTO;
 import info.ivicel.springflasky.web.service.FollowService;
 import info.ivicel.springflasky.web.service.PostService;
+import info.ivicel.springflasky.web.service.RoleService;
 import info.ivicel.springflasky.web.service.UserService;
+import java.util.List;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +30,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -39,12 +49,14 @@ public class UserController {
     private UserService userService;
     private PostService postService;
     private FollowService followService;
+    private RoleService roleService;
 
     @Autowired
-    public UserController(UserService userService, PostService postService, FollowService followService) {
+    public UserController(UserService userService, PostService postService, FollowService followService, RoleService roleService) {
         this.userService = userService;
         this.postService = postService;
         this.followService = followService;
+        this.roleService = roleService;
     }
 
     /**
@@ -107,7 +119,7 @@ public class UserController {
 
     @PostMapping("/{username}/edit-profile")
     @PreAuthorize("hasRole('ADMIN') or @webAuth.canEditProfile(authentication, #username)")
-    public String editProfile(@PathVariable("username") String username, UserProfileDto userProfile,
+    public String editProfile(@PathVariable("username") String username, UserProfileDTO userProfile,
             RedirectAttributes ra) {
         User user = new User();
         user.setUsername(username);
@@ -192,9 +204,49 @@ public class UserController {
     @GetMapping("/admin/{username}/edit-profile")
     @PreAuthorize("hasRole('ADMIN')")
     public String adminEditProfile(@PathVariable("username") String username, Model model) {
-        getOrThrowException(username, model);
+        User user = getOrThrowException(username, model);
+        List<Role> roles = roleService.findAll();
+        model.addAttribute("roles", roles);
+        if (model.containsAttribute("profile")) {
 
-        return "admin_edit_profile";
+            AdminEditProfileDTO profile = (AdminEditProfileDTO) model.asMap().get("profile");
+            user.setUsername(profile.getUsername());
+            user.setEmail(profile.getEmail());
+            user.setAboutMe(profile.getAboutMe());
+            user.setLocation(profile.getLocation());
+            user.setName(profile.getName());
+            user.getRole().setId(profile.getRole());
+        } else {
+            model.addAttribute("profile", user);
+        }
+
+        return "user/edit_profile";
+    }
+
+    @PostMapping("/admin/{username}/edit-profile")
+    @PreAuthorize("hasRole('ADMIN')")
+    public String adminEditProfile(@PathVariable("username") String username,
+            @ModelAttribute("profile") @Validated AdminEditProfileDTO profile,
+            BindingResult result, RedirectAttributes ra) {
+        if (!result.hasErrors()) {
+            User user = getOrThrowException(username, null);
+
+            try {
+                userService.updateProfileByAdmin(user, profile);
+                ra.addFlashAttribute("msg", "update successful");
+            } catch (DuplicateUsernameException e) {
+                result.addError(new FieldError("profile", "username", e.getMessage()));
+            } catch (DuplicateEmailException e) {
+                result.addError(new FieldError("profile", "email", e.getMessage()));
+            } catch (IllegalArgumentException e) {
+                log.debug("bad request: ", e.getMessage());
+                // todo: bad request
+            }
+        }
+
+        ra.addFlashAttribute("profile", profile);
+        ra.addFlashAttribute("org.springframework.validation.BindingResult.profile", result);
+        return "redirect:edit-profile";
     }
 
     private User getOrThrowException(String username, Model model) {

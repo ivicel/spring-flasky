@@ -15,11 +15,11 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Data
 @EqualsMatch(first = "password", second = "confirmPassword",
         message = "password and confirm password must be the same")
-public class RegisterDto implements Serializable {
+public class RegisterDTO implements Serializable {
 
     private static final long serialVersionUID = -1298146585566057857L;
 
-    @Email(regexp = "^[.\\w\\d]+@[_\\w\\d]+\\.[a-zA-Z]+$")
+    @Email(regexp = "^[-.\\w\\d]+@[-.\\w\\d]+\\.[a-zA-Z]+$")
     private String email;
 
     @Pattern(regexp = "[.\\w\\d]{6,16}", message = "username must be between 6 and 16 length, "

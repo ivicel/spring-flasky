@@ -6,7 +6,7 @@ import org.hibernate.validator.constraints.Length;
 
 
 @Data
-public class LoginDto {
+public class LoginDTO {
     @NotEmpty(message = "username or email can not be empty")
     @Length(min = 6, max = 16)
     private String username;

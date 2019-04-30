@@ -1,6 +1,6 @@
 package info.ivicel.springflasky.handler;
 
-import info.ivicel.springflasky.web.model.dto.LoginDto;
+import info.ivicel.springflasky.web.model.dto.LoginDTO;
 import java.io.IOException;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -28,7 +28,7 @@ public class LoginFailureHandler implements AuthenticationFailureHandler {
             AuthenticationException exception) throws IOException, ServletException {
         WebContext ctx = new WebContext(request, response, request.getServletContext(), request.getLocale());
         response.setStatus(HttpStatus.NOT_FOUND.value());
-        LoginDto user = new LoginDto();
+        LoginDTO user = new LoginDTO();
         user.setUsername(request.getParameter("username"));
         user.setPassword(request.getParameter("password"));
         user.setRememberMe(request.getParameter("rememberMe") != null);

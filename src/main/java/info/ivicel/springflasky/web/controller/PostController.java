@@ -2,13 +2,13 @@ package info.ivicel.springflasky.web.controller;
 
 import info.ivicel.springflasky.core.WebSecurityAuth;
 import info.ivicel.springflasky.exception.PageNotFoundException;
+import info.ivicel.springflasky.util.PageUtil;
 import info.ivicel.springflasky.web.model.domain.Post;
 import info.ivicel.springflasky.web.model.domain.User;
 import info.ivicel.springflasky.web.model.dto.CommentView;
-import info.ivicel.springflasky.web.model.dto.PostDto;
+import info.ivicel.springflasky.web.model.dto.PostDTO;
 import info.ivicel.springflasky.web.service.CommentService;
 import info.ivicel.springflasky.web.service.PostService;
-import info.ivicel.springflasky.util.PageUtil;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -43,7 +43,7 @@ public class PostController {
 
     @PostMapping
     @ResponseBody
-    public ResponseEntity addNewPost(Authentication auth, @Validated PostDto postDto) {
+    public ResponseEntity addNewPost(Authentication auth, @Validated PostDTO postDto) {
         Post post = postDto.toPost();
         post.setAuthor((User) auth.getPrincipal());
 
@@ -100,7 +100,7 @@ public class PostController {
      */
     @PostMapping("/edit/{postId}")
     @ResponseBody
-    public ResponseEntity updatePost(@PathVariable("postId") Long postId,@Validated PostDto postDto) {
+    public ResponseEntity updatePost(@PathVariable("postId") Long postId,@Validated PostDTO postDto) {
         Post post = getOrThrowException(postId);
         post = postDto.toPost(post);
 

@@ -2,7 +2,8 @@ package info.ivicel.springflasky.web.service;
 
 import info.ivicel.springflasky.exception.AccountExistsException;
 import info.ivicel.springflasky.web.model.domain.User;
-import info.ivicel.springflasky.web.model.dto.RegisterDto;
+import info.ivicel.springflasky.web.model.dto.AdminEditProfileDTO;
+import info.ivicel.springflasky.web.model.dto.RegisterDTO;
 import java.util.Optional;
 
 public interface UserService {
@@ -21,7 +22,7 @@ public interface UserService {
 
     int updateCommonProfile(User user);
 
-    User register(RegisterDto dto) throws AccountExistsException;
+    User register(RegisterDTO dto) throws AccountExistsException;
 
     void confirm(User user);
 
@@ -34,4 +35,12 @@ public interface UserService {
     void updateLastSeen(User user);
 
     void unfollow(User user, User other);
+
+    Optional<User> findByEmail(String email);
+
+    boolean checkEmailExists(String email);
+
+    boolean checkUsernameExists(String username);
+
+    void updateProfileByAdmin(User user, AdminEditProfileDTO profile);
 }

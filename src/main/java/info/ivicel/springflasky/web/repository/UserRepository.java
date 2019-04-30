@@ -73,4 +73,8 @@ public interface UserRepository extends BaseRepository<User, Long> {
     @Modifying
     @Query(value = "delete from follows where follower_id = :id and followed_id = :other", nativeQuery = true)
     void removeFollowRelation(@Param("id") Long id, @Param("other") Long other);
+
+    boolean existsByEmail(String email);
+
+    boolean existsByUsername(String username);
 }

@@ -6,7 +6,7 @@ import lombok.Data;
 import org.springframework.lang.NonNull;
 
 @Data
-public class PostDto {
+public class PostDTO {
     @NotEmpty
     private String body;
 
