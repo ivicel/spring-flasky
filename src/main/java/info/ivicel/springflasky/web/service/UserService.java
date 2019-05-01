@@ -24,7 +24,7 @@ public interface UserService {
 
     User register(RegisterDTO dto) throws AccountExistsException;
 
-    void confirm(User user);
+    void save(User user);
 
     Optional<User> findByUsernameAndNotConfrim(String username);
 

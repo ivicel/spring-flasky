@@ -4,10 +4,14 @@ import static info.ivicel.springflasky.util.CommonUtil.renderEmailTemplate;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
+import info.ivicel.springflasky.core.MailSender;
 import info.ivicel.springflasky.exception.AccountExistsException;
+import info.ivicel.springflasky.util.ContextUtil;
 import info.ivicel.springflasky.web.model.domain.User;
 import info.ivicel.springflasky.web.model.dto.LoginDTO;
+import info.ivicel.springflasky.web.model.dto.PasswordDTO;
 import info.ivicel.springflasky.web.model.dto.RegisterDTO;
 import info.ivicel.springflasky.web.service.UserService;
 import io.github.biezhi.ome.OhMyEmail;
@@ -18,16 +22,20 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Function;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import javax.validation.constraints.Email;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.mail.MailProperties;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -53,16 +61,17 @@ public class AuthController {
     @Value("${flasky.serverHost:}")
     private String serverHost;
 
+    private HttpServletRequest request;
+
     @Autowired
-    public AuthController(UserService userService, MailProperties mailProperties) {
+    public AuthController(UserService userService, MailProperties mailProperties, HttpServletRequest request) {
         this.userService = userService;
         this.mailProperties = mailProperties;
+        this.request = request;
     }
 
     /**
      * login
-     * @param model
-     * @return
      */
     @GetMapping("/login")
     public String login(Model model) {
@@ -74,8 +83,6 @@ public class AuthController {
 
     /**
      * register
-     * @param model
-     * @return
      */
     @GetMapping("/register")
     public String register(Model model) {
@@ -105,10 +112,10 @@ public class AuthController {
         }
 
         ra.addFlashAttribute("msg",
-                "An email has sent to your, before you can access this site you need to confirm your account.");
+                "An email has sent to your, before you can access this site you need to save your account.");
         ra.addFlashAttribute("classappend", "alert-info");
 
-        sendConfirmed(dto.getUsername(), dto.getEmail(), request);
+        sendConfirmed(dto.getUsername(), dto.getEmail(), this::sendAccountConfirmedMail);
 
         return "redirect:/auth/login";
     }
@@ -132,9 +139,9 @@ public class AuthController {
                 return "auth/already_confirm";
             }
             user.get().setConfirmed(true);
-            userService.confirm(user.get());
+            userService.save(user.get());
         } catch (Exception e) {
-            log.warn("confirm token verify error: {}", e.getMessage());
+            log.warn("save token verify error: {}", e.getMessage());
             if (auth != null) {
                 if (auth.getName().equals(username)) {
                     return "redirect:/auth/unconfirm";
@@ -153,44 +160,137 @@ public class AuthController {
     @PreAuthorize("@webAuth.loginRequired(authentication) and not @webAuth.isConfirmed(authentication)")
     public String resendConfirmation(Authentication auth, HttpServletRequest request, HttpServletResponse response) {
         User user = (User) auth.getPrincipal();
-        sendConfirmed(user.getUsername(), user.getEmail(), request);
+        sendConfirmed(user.getUsername(), user.getEmail(), this::sendAccountConfirmedMail);
 
         return "auth/resend_confirm";
     }
 
-    private void sendConfirmed(String username, String email, HttpServletRequest request) {
-        new Thread(() -> {
-            String token = JWT.create()
-                    // 30 mins
-                    .withExpiresAt(new Date(System.currentTimeMillis() + 30 * 60 * 1000))
-                    // random hash, let our token looks random
-                    .withClaim("hash", UUID.randomUUID().toString().replaceAll("-", ""))
-                    .withClaim("user", username)
-                    .sign(Algorithm.HMAC256(securityKey));
-
-            String confirmUrl = buildConfirmUrl(request, token);
-            try {
-                sendMail(username, email, confirmUrl);
-            } catch (SendMailException e) {
-                log.error("Can not send email to {}: {}", email, e.getMessage());
-            }
-        }).run();
+    @GetMapping("/reset-password")
+    public String resetPassword(Model model) {
+        return "auth/reset_password";
     }
 
-    private void sendMail(String username, String email, String confirmUrl) throws SendMailException {
+    @PostMapping("/reset-password")
+    public String resetPassword(RedirectAttributes ra, @RequestParam("email")
+    @Email(regexp = "^[-.\\w\\d]+@[-.\\w\\d]+\\.[a-zA-Z]+$") String email) {
+        Optional<User> user = userService.findByEmail(email);
+        if (!user.isPresent()) {
+            ra.addFlashAttribute("email", email);
+            ra.addFlashAttribute("msg", "email not exists.");
+            ra.addFlashAttribute("classappend", "alert-warning");
+            return "redirect:reset-password";
+        }
+
+        sendConfirmed(user.get().getUsername(), email, this::sendRestPasswordMail);
+        return "auth/reset_password_mail_sent";
+    }
+
+    @GetMapping("/reset-new-password")
+    public String resetNewPassword(@RequestParam("token") String token, Model model,
+            HttpServletResponse response) {
+        if (!model.containsAttribute("passwordDto")) {
+            model.addAttribute("passwordDto", new PasswordDTO());
+        }
+
+        try {
+            JWT.require(Algorithm.HMAC256(securityKey)).build().verify(token);
+            model.addAttribute("token", token);
+            return "auth/reset_new_password";
+        } catch (JWTVerificationException e) {
+            response.setStatus(HttpStatus.BAD_REQUEST.value());
+            return "auth/token_expired";
+        }
+    }
+
+    @PostMapping("/reset-new-password")
+    public String resetNewPassword(@RequestParam("token") String token,
+            @Validated PasswordDTO password, BindingResult result,
+            RedirectAttributes ra,
+            HttpServletResponse response) {
+        if (result.hasErrors()) {
+            ra.addAttribute("token", token);
+            ra.addFlashAttribute("passwordDto", password);
+            ra.addFlashAttribute("org.springframework.validation.BindingResult.passwordDto", result);
+            return "redirect:reset-new-password";
+        }
+
+        try {
+            DecodedJWT jwt = JWT.require(Algorithm.HMAC256(securityKey)).build().verify(token);
+            String username = jwt.getClaim("user").asString();
+            Optional<User> user = userService.findByUsername(username);
+            user.ifPresent((u) -> {
+                u.setPasswordHash(ContextUtil.getBean(PasswordEncoder.class).encode(password.getPassword()));
+                userService.save(u);
+            });
+
+            ra.addFlashAttribute("msg", "your password has been reset successful.");
+            ra.addFlashAttribute("classappend", "alert-info");
+
+            return "redirect:login";
+        } catch (Exception e) {
+            log.warn("bad request, token error [{}]: {}", token, e.getMessage());
+        }
+
+        response.setStatus(HttpStatus.BAD_REQUEST.value());
+        return "auth/token_expired";
+    }
+
+    // todo: to send mail asynchronous, add this task into a task queue
+    private void sendConfirmed(String username, String email, Function<String, MailSender> func) {
+        String token = JWT.create()
+                // 30 mins
+                .withExpiresAt(new Date(System.currentTimeMillis() + 30 * 60 * 1000))
+                // random hash, let our token looks random
+                .withClaim("hash", UUID.randomUUID().toString().replaceAll("-", ""))
+                .withClaim("user", username)
+                .sign(Algorithm.HMAC256(securityKey));
+
+        func.apply(token).send(username, email);
+    }
+
+    private MailSender sendAccountConfirmedMail(String token) {
+        String url = buildUrl("/auth/save", token);
+        return (String username, String email) -> {
             Map<String, Object> attrs = new HashMap<>();
             attrs.put("username", username);
-            attrs.put("confirmUrl", confirmUrl);
+            attrs.put("callbackUrl", url);
 
-            OhMyEmail.subject("Account Comfirm")
-                    .from(mailProperties.getUsername())
-                    .to(email)
-                    .text(renderEmailTemplate("templates/auth/email/confirm.txt", attrs))
-                    .html(renderEmailTemplate("templates/auth/email/confirm.html", attrs))
-                    .send();
+            try {
+                OhMyEmail.subject("Account Comfirm")
+                        .from(mailProperties.getUsername())
+                        .to(email)
+                        .text(renderEmailTemplate("templates/auth/email/confirm.txt", attrs))
+                        .html(renderEmailTemplate("templates/auth/email/confirm.html", attrs))
+                        .send();
+            } catch (SendMailException e) {
+                log.error("Can not send email to {}: {}", email, e.getMessage());
+                throw new RuntimeException(e);
+            }
+        };
     }
 
-    private String buildConfirmUrl(HttpServletRequest request, String token) {
+    private MailSender sendRestPasswordMail(String token) {
+        String url = buildUrl("/auth/reset-new-password", token);
+        return (String username, String email) -> {
+            Map<String, Object> attrs = new HashMap<>();
+            attrs.put("username", username);
+            attrs.put("callbackUrl", url);
+
+            try {
+                OhMyEmail.subject("Rest your password")
+                        .from(mailProperties.getUsername())
+                        .to(email)
+                        .text(renderEmailTemplate("templates/auth/email/reset_password.txt", attrs))
+                        .html(renderEmailTemplate("templates/auth/email/reset_password.html", attrs))
+                        .send();
+            } catch (SendMailException e) {
+                log.error("Can not send email to {}: {}", email, e.getMessage());
+                e.printStackTrace();
+            }
+        };
+    }
+
+    private String buildUrl(String prefix, String token) {
         if (serverHost != null && serverHost.trim().length() > 0) {
             return serverHost.trim();
         }
@@ -205,8 +305,8 @@ public class AuthController {
         if (request.getContextPath() != null) {
             builder.append(request.getContextPath());
         }
-        builder.append("/auth/confirm?token=");
-        builder.append(token);
+
+        builder.append(prefix).append("?token=").append(token);
 
         return builder.toString();
     }
