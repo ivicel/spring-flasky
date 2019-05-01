@@ -1,13 +1,18 @@
 package info.ivicel.springflasky.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import info.ivicel.springflasky.core.WebSecurityAuth;
 import info.ivicel.springflasky.web.service.PostService;
 import info.ivicel.springflasky.web.service.UserService;
+import java.util.HashMap;
+import java.util.Map;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -56,7 +61,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http.formLogin().loginPage("/auth/login")
                 .failureHandler(loginFailureHandler).successHandler(loginSuccessHandler)
                 .and()
-                .logout().logoutUrl("/auth/logout").logoutSuccessUrl("/")
+                .logout().logoutUrl("/auth/logout")
+                .logoutSuccessHandler((request, response, authentication) -> {
+                    response.setStatus(HttpStatus.OK.value());
+                    response.setContentType(MediaType.APPLICATION_JSON_UTF8_VALUE);
+                    Map<String, String> map = new HashMap<>();
+                    map.put("url", request.getContextPath() + "/");
+                    new ObjectMapper().writeValue(response.getWriter(), map);
+                })
                 .clearAuthentication(true).invalidateHttpSession(true)
                 .and().rememberMe();
 

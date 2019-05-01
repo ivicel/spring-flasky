@@ -8,7 +8,6 @@ import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import info.ivicel.springflasky.core.MailSender;
 import info.ivicel.springflasky.exception.AccountExistsException;
-import info.ivicel.springflasky.util.ContextUtil;
 import info.ivicel.springflasky.web.model.domain.User;
 import info.ivicel.springflasky.web.model.dto.LoginDTO;
 import info.ivicel.springflasky.web.model.dto.PasswordDTO;
@@ -50,6 +49,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Controller
 @PropertySource("classpath:/application.yml")
 @RequestMapping("/auth")
+@Validated
 public class AuthController {
 
     private MailProperties mailProperties;
@@ -62,12 +62,15 @@ public class AuthController {
     private String serverHost;
 
     private HttpServletRequest request;
+    private PasswordEncoder passwordEncoder;
 
     @Autowired
-    public AuthController(UserService userService, MailProperties mailProperties, HttpServletRequest request) {
+    public AuthController(UserService userService, MailProperties mailProperties,
+            HttpServletRequest request, PasswordEncoder passwordEncoder) {
         this.userService = userService;
         this.mailProperties = mailProperties;
         this.request = request;
+        this.passwordEncoder = passwordEncoder;
     }
 
     /**
@@ -171,8 +174,7 @@ public class AuthController {
     }
 
     @PostMapping("/reset-password")
-    public String resetPassword(RedirectAttributes ra, @RequestParam("email")
-    @Email(regexp = "^[-.\\w\\d]+@[-.\\w\\d]+\\.[a-zA-Z]+$") String email) {
+    public String resetPassword(@Email @RequestParam("email") String email, RedirectAttributes ra) {
         Optional<User> user = userService.findByEmail(email);
         if (!user.isPresent()) {
             ra.addFlashAttribute("email", email);
@@ -219,7 +221,7 @@ public class AuthController {
             String username = jwt.getClaim("user").asString();
             Optional<User> user = userService.findByUsername(username);
             user.ifPresent((u) -> {
-                u.setPasswordHash(ContextUtil.getBean(PasswordEncoder.class).encode(password.getPassword()));
+                u.setPasswordHash(passwordEncoder.encode(password.getPassword()));
                 userService.save(u);
             });
 
@@ -233,6 +235,34 @@ public class AuthController {
 
         response.setStatus(HttpStatus.BAD_REQUEST.value());
         return "auth/token_expired";
+    }
+
+    @GetMapping("/change-password")
+    @PreAuthorize("@webAuth.loginRequired(authentication)")
+    public String changePassword(Model model) {
+        if (!model.containsAttribute("passwordDto")) {
+            model.addAttribute("passwordDto", new PasswordDTO());
+        }
+        return "auth/reset_new_password";
+    }
+
+    @PostMapping("/change-password")
+    @PreAuthorize("@webAuth.loginRequired(authentication)")
+    public String changePassword(Authentication auth, RedirectAttributes ra,
+            @Validated PasswordDTO password, BindingResult result) {
+        if (result.hasErrors()) {
+            ra.addFlashAttribute("org.springframework.validation.BindingResult.passwordDto", result);
+            ra.addFlashAttribute("passwordDto", password);
+        } else {
+            String passwordHash = passwordEncoder.encode(password.getPassword());
+            int count = userService.updatePasswordByUsername(auth.getName(), passwordHash);
+            if (count > 0) {
+                ra.addFlashAttribute("msg", "change password success.");
+                ra.addFlashAttribute("classappend", "alert-info");
+            }
+        }
+
+        return "redirect:change-password";
     }
 
     // todo: to send mail asynchronous, add this task into a task queue

@@ -184,4 +184,10 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
         userRepository.save(user);
     }
+
+    @Override
+    @Transactional
+    public int updatePasswordByUsername(String username, String password) {
+        return userRepository.updatePassswordByUsername(username, password);
+    }
 }

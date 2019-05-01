@@ -32,7 +32,19 @@
                         alert.addClass(result.class);
                     }
                 });
-            })
+            });
+
+            $('#logout').click(function(e) {
+                e.preventDefault();
+                let that = $(this);
+                let data = {};
+                data[that.data('name')] = that.data('value');
+                $.post(that.attr('href'), data, function (data, textStatus, xhr) {
+                    if (xhr.status === 200) {
+                        window.location.href = data.url;
+                    }
+                });
+            });
         </script>
         <th:block th:replace="${scripts}"/>
     </th:block>

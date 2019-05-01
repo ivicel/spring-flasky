@@ -77,4 +77,8 @@ public interface UserRepository extends BaseRepository<User, Long> {
     boolean existsByEmail(String email);
 
     boolean existsByUsername(String username);
+
+    @Modifying
+    @Query("update User u set u.passwordHash = :password where u.username = :username")
+    int updatePassswordByUsername(@Param("username") String username, @Param("password") String password);
 }

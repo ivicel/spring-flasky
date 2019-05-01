@@ -43,4 +43,6 @@ public interface UserService {
     boolean checkUsernameExists(String username);
 
     void updateProfileByAdmin(User user, AdminEditProfileDTO profile);
+
+    int updatePasswordByUsername(String username, String password);
 }
