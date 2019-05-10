@@ -28,18 +28,18 @@ public class WebSecurityAuth {
             return false;
         }
 
-        return AuthorityUtils.authorityListToSet(auth.getAuthorities()).contains("ROLE_ADMIN")||
+        return AuthorityUtils.authorityListToSet(auth.getAuthorities()).contains("ROLE_ADMIN") ||
                 (post.getAuthor().equals(auth.getPrincipal()) && hasPermission(auth, Permission.WRITE));
     }
 
     public boolean canEditProfile(Authentication auth, String username) {
-        Object currentUser = auth.getPrincipal();
-        if (currentUser instanceof User) {
-            User user = (User) currentUser;
-            return user.getUsername().equalsIgnoreCase(username);
+        if (!(auth instanceof User)) {
+            return false;
         }
 
-        return false;
+        return auth.getName().equals(username) ||
+                AuthorityUtils.authorityListToSet(auth.getAuthorities()).contains("ROLE_ADMIN") ||
+                AuthorityUtils.authorityListToSet(auth.getAuthorities()).contains("ROLE_MODERATOR");
     }
 
     public boolean hasPermission(Authentication auth, Permission permission) {

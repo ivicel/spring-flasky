@@ -134,6 +134,8 @@ public class AuthController {
     public String confirmAccount(Authentication auth, HttpSession session, @RequestParam("token") String token) {
         String username = null;
         try {
+            // todo: while success to do this, sync the session to login account
+            // todo: to allow token could be used only once
             DecodedJWT jwt = JWT.require(Algorithm.HMAC256(securityKey)).build().verify(token);
             username = jwt.getClaim("user").asString();
 
@@ -279,7 +281,7 @@ public class AuthController {
     }
 
     private MailSender sendAccountConfirmedMail(String token) {
-        String url = buildUrl("/auth/save", token);
+        String url = buildUrl("/auth/confirm", token);
         return (String username, String email) -> {
             Map<String, Object> attrs = new HashMap<>();
             attrs.put("username", username);
