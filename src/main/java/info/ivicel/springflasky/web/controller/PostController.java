@@ -19,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -43,6 +44,7 @@ public class PostController {
 
     @PostMapping
     @ResponseBody
+    @PreAuthorize("hasPermission(null, T(info.ivicel.springflasky.web.model.Permission).WRITE)")
     public ResponseEntity addNewPost(Authentication auth, @Validated PostDTO postDto) {
         Post post = postDto.toPost();
         post.setAuthor((User) auth.getPrincipal());
