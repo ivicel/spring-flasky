@@ -81,4 +81,8 @@ public interface UserRepository extends BaseRepository<User, Long> {
     @Modifying
     @Query("update User u set u.passwordHash = :password where u.username = :username")
     int updatePassswordByUsername(@Param("username") String username, @Param("password") String password);
+
+    @Modifying
+    @Query("update User u set u.commentCount = u.commentCount + 1 where u.username = :username")
+    int updateCommentCount(@Param("username") String username);
 }

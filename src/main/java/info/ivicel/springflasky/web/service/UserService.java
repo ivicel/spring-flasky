@@ -45,4 +45,6 @@ public interface UserService {
     void updateProfileByAdmin(User user, AdminEditProfileDTO profile);
 
     int updatePasswordByUsername(String username, String password);
+
+    void updateNewCommentCount();
 }

@@ -3,6 +3,7 @@ package info.ivicel.springflasky.web.service.impl;
 import info.ivicel.springflasky.exception.AccountExistsException;
 import info.ivicel.springflasky.exception.DuplicateEmailException;
 import info.ivicel.springflasky.exception.DuplicateUsernameException;
+import info.ivicel.springflasky.util.ContextUtil;
 import info.ivicel.springflasky.web.model.domain.Role;
 import info.ivicel.springflasky.web.model.domain.User;
 import info.ivicel.springflasky.web.model.dto.AdminEditProfileDTO;
@@ -189,5 +190,12 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     @Transactional
     public int updatePasswordByUsername(String username, String password) {
         return userRepository.updatePassswordByUsername(username, password);
+    }
+
+    @Override
+    @Transactional
+    public void updateNewCommentCount() {
+
+        userRepository.updateCommentCount(ContextUtil.getAuthentication().getName());
     }
 }
